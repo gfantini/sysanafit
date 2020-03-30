@@ -1,0 +1,4 @@
+regen_default.dat	2 columns file [BinIndex]	[RegenerationCorrection]
+			This is thought to correct for regeneration on the AlBe sphere the theoretical model.
+			It is a binned correction assuming bins in |Delta T| = proper decay time difference of the 2 kaons are 1 TauShort wide
+			
