@@ -69,11 +69,12 @@ Double_t fZetaSL(const Double_t dt,const Double_t zetaSL,const bool normalize);
 // to get the bin content (normalized) for fitting use
 // ComputeIntegralSL(zetaSL,bin_min,bin_max) / ComputeIntegralSL(zetaSL, fit_range_min, fit_range_max)
 Double_t ComputeIntegralSL(const Double_t zetaSL,const Double_t xmin = 0.,const Double_t xmax = 12.);
-Double_t fGamma(const Double_t dt,const Double_t gamma); // WARNING <-- global constants not implemented!
+Double_t fGamma(const Double_t dt,const Double_t gamma , const bool normalize); // WARNING <-- global constants not implemented!
 Double_t ComputeIntegralGamma(const Double_t gamma,const Double_t xmin = 0.,const Double_t xmax = 12.);
-Double_t fZeta00(const Double_t dt,const Double_t zeta00); // WARNING <-- global constants not implemented!
+Double_t fZeta00(const Double_t dt,const Double_t zeta00 , const bool normalize); // WARNING <-- global constants not implemented!
 Double_t ComputeIntegral00(const Double_t zeta00,const Double_t xmin = 0.,const Double_t xmax = 12.);
-Double_t fOmega(const Double_t dt,const Double_t ReOmega,const Double_t ImOmega); // WARNING <-- global constants not implemented!
+Double_t fOmega(const Double_t dt,const Double_t ReOmega,const Double_t ImOmega , const bool normalize); // WARNING <-- global constants not implemented!
+Double_t ComputeIntegralOmega(const Double_t ReOmega,const Double_t ImOmega,const Double_t xmin = 0.,const Double_t xmax = 12.);
 
 // **************************** BEGIN SECTION ABOUT HISTOGRAM BUILDING
 // par[0] defines which theoretical model
@@ -110,7 +111,7 @@ Double_t ComputeIntegralSL(const Double_t zetaSL,const Double_t xmin = 0.,const 
 }
 
 //------------------------------------------------------------------------------------
-Double_t fGamma(Double_t dt,Double_t gamma)
+Double_t fGamma(Double_t dt,Double_t gamma, const bool normalize)
 {// versione della funzione gamma mostrata al kaon meeting 05/2017
 	// all numerical constants taken from PDG 2016
 	// err(hbar) circa 6 ppb (trascurabile)
@@ -163,17 +164,18 @@ Double_t fGamma(Double_t dt,Double_t gamma)
 	result += -4.*cos(dm*dt)*exp(-0.5*DG*dt);
 	result += (-2.*SG/GammaS)*(gamma/(DG*modeta*modeta))*exp(-GammaS*dt);
 	
-	return result;
+	if(normalize ) {return result/ComputeIntegralGamma(gamma*hbar);}
+	else return result;
 }
 
 Double_t ComputeIntegralGamma(const Double_t gamma,const Double_t xmin = 0.,const Double_t xmax = 12.)
 {
-	auto lambda = [](double *x, double *p){ return fGamma(x[0],p[0]); };
-	TF1 fGamma("f1",lambda,0,100,1); // 1 == number of parameters
-	fGamma.SetParameter(0,gamma);
-	return fGamma.Integral(xmin,xmax); // relative error on integral 10^-12
+  auto lambda = [](double *x, double *p){ return fGamma(x[0],p[0] , false); };
+  TF1 fGamma("f1",lambda,0,100,1); // 1 == number of parameters
+  fGamma.SetParameter(0,gamma);
+  return fGamma.Integral(xmin,xmax); // relative error on integral 10^-12
 }
-Double_t fZeta00(const Double_t dt,const Double_t zeta00)
+Double_t fZeta00(const Double_t dt,const Double_t zeta00, const bool normalize)
 {
 	
 	// all those physical constants are copied from the phys_const in FITINTERF
@@ -208,16 +210,17 @@ Double_t fZeta00(const Double_t dt,const Double_t zeta00)
 	aux2+= 4.*pow(dm,2)*(  2.*(TComplex::Exp(a2I*p_2)*exp(sgk*dt) + TComplex::Exp(a2I*p_1)*TComplex::Exp((-a2I*dm+sgk)*dt)) *gl*gs*m_1*m_2*(z00-2.) +TComplex::Exp(aI*(p_1+p_2))* TComplex::Exp(((-a2I*dm+3.*gl+gs)*dt)/2.) *gl*(gl*z00 + gs*(-2.*pow(m_2,2)*(z00-2.) + z00)) +TComplex::Exp(aI*(p_1+p_2))* TComplex::Exp(((-a2I*dm+gl+3.*gs)*dt)/2.) *gs*pow(m_1,2)*(gs*pow(m_2,2)*z00+ gl*(4.+(-2.+pow(m_2,2))*z00)));
 	aux2+= pow(sgk,2)*(gl*(gl*z00 + gs*(-2.*pow(m_2,2)*(z00-2.) + z00))* TComplex::Exp(aI*(p_1+p_2))*TComplex::Exp(((-a2I*dm + 3*gl + gs)*dt)/2.)-2.*TComplex::Exp((-a2I*dm +sgk)*dt)*gl*gs*m_1*m_2*(TComplex::Exp(2.*aI*dm*dt)* (-1.*(TComplex::Exp(2.*aI*p_2)*(z00-2.))+z00) + TComplex::Exp(2.*aI*p_1)*(2. + (-1. + TComplex::Exp(2.*aI*p_2))*z00)) +TComplex::Exp(aI*(p_1 + p_2) + ((-a2I*dm+gl+3.*gs)*dt)/2.)* gs*pow(m_1,2)*(gs*pow(m_2,2)*z00 + gl*(4. + (pow(m_2,2)-2.)*z00)));
 	v1 = aux1*aux2;
-	return v1.Re()/(4.*gl*gs*sgk*(4.*pow(dm,2) + pow(sgk,2)));
+	if(normalize){return v1.Re()/(4.*gl*gs*sgk*(4.*pow(dm,2) + pow(sgk,2)))/(ComputeIntegral00(zeta00));}
+	else {return v1.Re()/(4.*gl*gs*sgk*(4.*pow(dm,2) + pow(sgk,2)));};
 }
 Double_t ComputeIntegral00(const Double_t zeta00,const Double_t xmin = 0.,const Double_t xmax = 12.)
 {
-	auto lambda = [](double *x, double *p){ return fZeta00(x[0],p[0]); };
-	TF1 f00("f1",lambda,0,100,1); // 1 == number of parameters
-	f00.SetParameter(0,zeta00);
-	return f00.Integral(xmin,xmax); // relative error on integral 10^-12
+  auto lambda = [](double *x, double *p){ return fZeta00(x[0],p[0] , false); };
+  TF1 f00("f1",lambda,0,100,1); // 1 == number of parameters
+  f00.SetParameter(0,zeta00);
+  return f00.Integral(xmin,xmax); // relative error on integral 10^-12
 }
-Double_t fOmega(const Double_t dt,const Double_t ReOmega,const Double_t ImOmega)
+Double_t fOmega(const Double_t dt,const Double_t ReOmega,const Double_t ImOmega, const bool normalize)
 {
 	// all those physical constants are copied from the phys_const in FITINTERF
 	//Double_t etapm_mod = 2.232e-3; // same as ADS
@@ -250,11 +253,12 @@ Double_t fOmega(const Double_t dt,const Double_t ReOmega,const Double_t ImOmega)
 	// when you see "/**/" means breakline in old FORTRAN function
 	aux1= ( modomega*( (-4.*TComplex::Exp( (aI*(2.*p_1-2.*phiomega+(-2.*dm+aI*SG)*dt))/2. )* /**/ m_1)/(aI2*dm+gl+3.*gs) + /**/ (4.*TComplex::Exp(aI*(p_2-phiomega+aI*gs*dt))*m_2)/ /**/ (aI2*dm+gl+3.*gs) + /**/ (4.*TComplex::Exp(-aI*(p_2+phiomega)-gl*dt)*pow(m_1,2)*m_2)/ /**/ (-aI2*dm+3.*gl+gs)+ /**/ (4.*TComplex::Exp(-aI*(p_1+phiomega)- /**/ ((-aI2*dm+gl+gs)*dt)/2.)* /**/ m_1*pow(m_2,2))/(aI2*dm-3.*gl-gs)+ /**/ modomega/(exp(gs*dt)*gs) /**/ -(2.*TComplex::Exp(-aI*p_1-aI*p_2-((-aI2*dm+SG)*dt)/2.)* /**/ m_1*m_2*modomega)/(-aI2*dm+SG) - /**/ (2.*TComplex::Exp((aI*(2.*p_1+2.*p_2 + /**/ (-2.*dm + aI*SG)*dt))/2.)* /**/ m_1*m_2*modomega)/(aI2*dm+SG) + /**/ (pow(m_1,2)*pow(m_2,2)*modomega)/(exp(gl*dt)*gl)))/2.;
 	aux1+=( (TComplex::Exp(aI*p_1-((2.*gl+gs)*dt)/2.)*m_1)/SG - /**/ (TComplex::Exp(aI*p_2 + aI*dm*dt-((gl+2.*gs)*dt)/2.) /**/*m_2)/SG + /**/(2.*TComplex::Exp(aI*phiomega+aI*dm*dt- /**/ ((gl+2.*gs)*dt)/2.) /**/ *modomega)/ /**/ (aI2*dm-gl-3.*gs) + /**/ (2.*TComplex::Exp(aI*(p_1+p_2+phiomega) - /**/ ((2.*gl+gs)*dt)/2. )*m_1* /**/ m_2*modomega) / (aI2*dm+3.*gl+gs))* /**/ TComplex::Conjugate(TComplex::Exp(aI*p_1+(gs*dt)/2.)*m_1 - /**/ TComplex::Exp(aI*p_2+aI*dm*dt+(gl*dt)/2.)*m_2);
-	return aux1.Re();
+	if(normalize) return aux1.Re()/ComputeIntegralOmega(ReOmega , ImOmega);
+	else return aux1.Re();
 }
 Double_t ComputeIntegralOmega(const Double_t ReOmega,const Double_t ImOmega,const Double_t xmin = 0.,const Double_t xmax = 12.)
 {
-	auto lambda = [](double *x, double *p){ return fOmega(x[0],p[0],p[1]); }; // x[0] means "|dt|"
+  auto lambda = [](double *x, double *p){ return fOmega(x[0],p[0],p[1] ,false); }; // x[0] means "|dt|"
 	TF1 fOmega("f1",lambda,0,100,2); // 2 == number of parameters
 	fOmega.SetParameter(0,ReOmega);
 	fOmega.SetParameter(1,ImOmega);
