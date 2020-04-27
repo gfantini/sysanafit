@@ -161,7 +161,7 @@ Double_t fGamma(Double_t dt,Double_t gamma, const bool normalize)
 	gamma = gamma/hbar;
 	Double_t result = 0.;
 	result += (1.+gamma/(DG*modeta*modeta))*4.*cosh(0.5*DG*dt)*exp(-0.5*SG*dt);
-	result += -4.*cos(dm*dt)*exp(-0.5*DG*dt);
+	result += -4.*cos(dm*dt)*exp(-0.5*SG*dt);
 	result += (-2.*SG/GammaS)*(gamma/(DG*modeta*modeta))*exp(-GammaS*dt);
 	
 	if(normalize ) {return result/ComputeIntegralGamma(gamma*hbar);}
