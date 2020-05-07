@@ -1,0 +1,25 @@
+void Bprova2D() {
+  TFile *rootfile= new TFile("Prova.root" , "RECREATE");
+  TTree *tree = new TTree("Prova" , "Prova");
+  double mks;
+  double mkl;
+  tree -> Branch("InvMassKS" , &mks);
+  tree -> Branch("InvMassKL" , &mkl);
+  int nbkg = 1000;
+  int nsig = 2000;
+  for(int i = 0; i < nbkg ; i++){
+    mks = (-0.5+gRandom->Rndm())*20;  
+    mkl = (-0.5+gRandom->Rndm())*20;
+    tree -> Fill();
+  }
+  for(int i = 0; i < nsig ; i++){
+    mks = gRandom->Gaus(0,2);  
+    mkl = gRandom->Gaus(0,2);
+    tree -> Fill();
+  }
+
+  tree ->Print();
+  tree -> Write();
+  rootfile -> Close();
+
+}

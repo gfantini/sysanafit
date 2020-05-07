@@ -1,0 +1,28 @@
+using namespace RooFit ;
+void RooProva () {
+  TFile *rootfile = new TFile("../src/Histograms_cutvar00_p000.root");
+  TTree *tree = (TTree*) rootfile -> Get("TreeIMass");
+  TH1F *h = (TH1F*) rootfile -> Get("hInvMass");
+  RooRealVar x("InvMass" , "InvMass" , -6 , 6);
+  RooDataHist hist("hist" , "Dataset with x" , x ,h);
+  RooDataSet data("data" , "Dataset with x" , tree ,x);
+  RooRealVar mean("mean","Mean of Gaussian",0,-10,10) ;
+  RooRealVar sigma("sigma","Width of Gaussian",3,-10,10) ;
+  RooRealVar norm("norm","Norm of Gaussian",0.5,0,1) ;
+  RooGaussian gauss("gauss","gauss(x,mean,sigma)",x,mean,sigma);
+  RooPolynomial bkg("pol0","pol0",x,RooArgList()) ;
+  RooRealVar nsig("nsig","signal fraction",500,0.,1000.) ;
+  RooRealVar nbkg("nbkg","background fraction",40,0.,500) ;
+  RooExtendPdf esig("esig","esig",gauss,nsig) ;
+  RooExtendPdf ebkg("ebkg","ebkg",bkg,nbkg) ;
+  RooAddPdf model("model" , "model" , RooArgList(esig, ebkg));
+  RooPlot* xframe = x.frame();
+  data.plotOn(xframe , Binning(14));
+  hist.plotOn(xframe);
+  model.fitTo(data ,Range(-5,5) , Extended(kTRUE));
+  model.plotOn(xframe , LineColor(kRed));
+  model.plotOn(xframe , Components("pol0") , LineStyle(kDashed) , LineColor(kBlue));
+  xframe->Draw();
+
+
+}
