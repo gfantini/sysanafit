@@ -1,0 +1,11 @@
+ProfiledLikelihoodRe -> SetTitle("ProfileLikelihood for Re#omega")
+ProfiledLikelihoodRe -> Draw()
+ProfiledLikelihoodIm -> SetTitle("ProfileLikelihood for Im#omega")
+ProfiledLikelihoodIm -> Draw()
+
+hData -> SetMarkerStyle(8)
+hData -> GetYaxis() -> SetRangeUser(0 , 1100)
+hData -> GetYaxis() -> SetTitle("Events")
+hData -> GetXaxis() -> SetTitle("#Deltat/#tau_{s}")
+hFit-> SetLineColor(kRed)
+hData -> Draw() ; hFit -> Draw("SAME")

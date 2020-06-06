@@ -460,7 +460,7 @@ bool GFitinterf::Fit(bool bOverwriteResult,const int verbosity,const bool silent
 		{
 			bin_value_data   = h1000->GetBinContent(bin_reco) - h5000->GetBinContent(bin_reco); // background subtraction
 			bin_value_theory = par[1]*hTheoryDatMc.GetBinContent(bin_reco);
-			bin_error = bin_value_data*sqrt(  (h1000->GetBinContent(bin_reco) + h5000->GetBinContent(bin_reco))/pow(bin_value_data,2) + pow(h3000->GetBinError(bin_reco)/h3000->GetBinContent(bin_reco) ,2) + pow(h2200->GetBinError(bin_reco)/h2200->GetBinContent(bin_reco) ,2) ); // 3 error terms come from STAT (+) DATA/MC (+) EFFI
+			bin_error = bin_value_data*sqrt(  (h1000->GetBinContent(bin_reco) + pow(h5000->GetBinError(bin_reco),2))/pow(bin_value_data,2) + pow(h3000->GetBinError(bin_reco)/h3000->GetBinContent(bin_reco) ,2) + pow(h2200->GetBinError(bin_reco)/h2200->GetBinContent(bin_reco) ,2) ); // 3 error terms come from STAT (+) DATA/MC (+) EFFI
 			if(bOverwriteResult){ // overwrite the histograms in the Result part It was initialized by the constructor.
 				hData->SetBinContent(bin_reco,bin_value_data);
 				hData->SetBinError(bin_reco,bin_error);
@@ -469,6 +469,7 @@ bool GFitinterf::Fit(bool bOverwriteResult,const int verbosity,const bool silent
 			chisquare += pow((bin_value_data-bin_value_theory)/bin_error,2);
 			if(debug)cout << std::setprecision(8) << "BIN: "<< bin_reco << "\tDAT: " << bin_value_data << "\tTHEORY: "<< bin_value_theory << "\tERR: " << bin_error << endl;
 		}
+		
 		return chisquare;
 	};
 	
@@ -481,7 +482,6 @@ bool GFitinterf::Fit(bool bOverwriteResult,const int verbosity,const bool silent
 	// 3.     fit data
 	ROOT::Fit::Fitter  fitter;
 	fitter.SetFCN(fcn,Par);
-
 	// configure fitter according to class construction
 	for(int jj = 0; jj < Npar; jj++)
 	{
@@ -516,8 +516,11 @@ bool GFitinterf::Fit(bool bOverwriteResult,const int verbosity,const bool silent
 	 */
 	
 	bool my_bFitOk = fitter.FitFCN();
+
+
 	if( !my_bFitOk ) Error("sysanacustom","Fit did not converge.");
-	if( false == fitter.CalculateMinosErrors())cerr << "ERROR: impossible to compute MINOS uncertainty." << endl;
+	
+       	if( false == fitter.CalculateMinosErrors())cerr << "ERROR: impossible to compute MINOS uncertainty." << endl;
 	
 	// 4.     retrieve results
 	const ROOT::Fit::FitResult & my_result = fitter.Result(); // Rene Brun la sa lunga
@@ -530,12 +533,46 @@ bool GFitinterf::Fit(bool bOverwriteResult,const int verbosity,const bool silent
 		Result_IsSet = true;
 		bFitOk = my_bFitOk;
 		Result = fitter.Result();
+		if(ModelName == "omega") {  //Contour plot for the omega model
+		  TMultiGraph *mg = new TMultiGraph();
+		  mg -> SetTitle("Contour Plot");
+		  mg -> GetXaxis() -> SetTitle("Re#omega");
+		  mg -> GetYaxis() -> SetTitle("Im#omega");
+		  TGraph *gr11 = (TGraph*)gMinuit->Contour(80,2,3);
+		  gr11 -> SetLineColor(kGreen);
+		  mg -> Add(gr11 , "lp");
+		  gMinuit -> SetErrorDef(4);
+		  double x[1] , y[1];
+		  x[0] = -0.000161678;
+		  y[0] = -0.000280546;
+		  TGraph *point = new TGraph(1 , x , y);
+		  TGraph *gr12 = (TGraph*)gMinuit->Contour(80,2,3);
+		  gr12 -> SetLineColor(kRed);
+		  mg -> Add(gr12 , "lp");
+		  point -> SetMarkerStyle(8);
+		  point -> SetMarkerColor(kBlue);
+		  point -> SetMarkerSize(2);
+		  mg -> Add(point , "P");
+		  TCanvas *c1 = new TCanvas("c1");
+		  c1 -> SetGrid();
+		  mg -> Draw("A");
+		  TLegend  *legend = new TLegend(0.1 , 0.7 , 0.4 , 0.9);
+		  legend -> SetHeader("Contour Plot" , "C");
+		  legend -> AddEntry(gr12 , "n#sigma = 2" , "lap");
+		  legend -> AddEntry(gr11 , "n#sigma = 1" , "lap");
+		  legend -> AddEntry(point , "Best Fit" , "P");
+		  legend -> Draw(); 
+		  c1 -> SaveAs("Contour2N.pdf");
+		}
 	}else{
 		// it means it is used by some other method (like profiled likelihood) and should be exported as temporary result
 		ResultTmp = fitter.Result();
 	}
 	
 	// 6.     return result (fit converged? t/f)
+	
+	
+	
 	return my_bFitOk;
 }
 
