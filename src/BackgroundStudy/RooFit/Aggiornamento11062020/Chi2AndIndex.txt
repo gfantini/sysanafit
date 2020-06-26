@@ -1,0 +1,40 @@
+1.50434 (chi2/(nbinx*nbiny -2)) For 5MeV cut
+13.6278 for 4Mev cut -> attention! not a good metod, needs work
+integrals of gauss:
+5.79587 (4MeV)
+8.31994 (5MeV)
+12.2887 (6MeV)
+15.0620 (7MeV)
+18.0975 (8MeV)
+20.9331 (9MeV)
+23.9628 (10MeV)
+
+
+Kolmogorov-Smirnov test:
+
+15x15 bin (10 MeV Cut): 0.982808
+
+15x15 bin (9 MeV Cut):  0.959905
+
+15x15 bin (8 MeV Cut): 0.990624
+
+15x15 bin (7 MeV Cut): 0.986396
+
+15x15 bin (6 MeV Cut): 0.921165
+
+15x15 bin (5 MeV Cut): 0.875704
+10x10 bin (5 MeV Cut): 0.9835
+
+15x15 bin (4 MeV Cut): 0.585323
+10x10 bin (4 MeV Cut): 0.90998
+10x10 bin (4 Mev Cut-FlatBkg): 0.895559
+
+Integrals of ebkg pdf (using tf2 integral):
+
+10 MeV: 0.294863
+9 MeV: 0.329058
+8 MeV: 0.380266
+7 MeV:  0.445104
+6 MeV: 0.549148
+5 MeV: 0.691379
+4 MeV: 1	
